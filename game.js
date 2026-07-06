@@ -15,26 +15,40 @@ class GameState {
     }
 
     generatePuzzle() {
-        // パズルの自動生成アルゴリズム（スターバトル）
-        // 1. 各行、各列に1匹ずつ、かつ隣接しないように配置
-        // 2. それらの位置を元に領域（Region）を生成
-        
-        // Initialize empty solution
-        this.solution = Array(this.size).fill().map(() => Array(this.size).fill(false));
-        
-        let validPlacement = false;
-        while (!validPlacement) {
-            validPlacement = this._tryPlaceStars();
-        }
-
-        // Generate regions around the stars
-        this._generateRegions();
-
-        // Initialize playable grid
+        // Initialize playable grid structure
         this.grid = Array(this.size).fill().map(() => Array(this.size).fill().map(() => ({
             regionId: -1,
             content: null
         })));
+
+        let isUnique = false;
+        let attempts = 0;
+
+        while (!isUnique) {
+            attempts++;
+            // 1. 各行、各列に1匹ずつ、かつ隣接しないように配置
+            let validPlacement = false;
+            while (!validPlacement) {
+                validPlacement = this._tryPlaceStars();
+            }
+
+            // 2. それらの位置を元に領域（Region）を生成
+            // 同じ星の配置で何度か領域生成を試す
+            let regionAttempts = 0;
+            while (regionAttempts < 20 && !isUnique) {
+                this._generateRegions();
+                if (this._hasUniqueSolution()) {
+                    isUnique = true;
+                }
+                regionAttempts++;
+            }
+            
+            // 安全装置（万が一無限ループしそうな場合は妥協するが、基本的には抜ける）
+            if (attempts > 200) {
+                console.warn("Could not find a unique solution after 200 attempts. Proceeding with current board.");
+                break;
+            }
+        }
 
         // Assign region IDs to grid
         for (let i = 0; i < this.regions.length; i++) {
@@ -42,6 +56,70 @@ class GameState {
                 this.grid[cell.y][cell.x].regionId = i;
             }
         }
+    }
+
+    _hasUniqueSolution() {
+        let solutionsCount = 0;
+        const size = this.size;
+        const colsUsed = new Set();
+        const regionsUsed = new Set();
+        
+        // 高速化のため、座標からリージョンIDを引けるマップを作成
+        const regionMap = Array(size).fill().map(() => Array(size).fill(-1));
+        for (let i = 0; i < this.regions.length; i++) {
+            for (let cell of this.regions[i]) {
+                regionMap[cell.y][cell.x] = i;
+            }
+        }
+        
+        // 探索用の状態
+        const currentSolution = Array(size).fill().map(() => Array(size).fill(false));
+
+        const isValid = (r, c) => {
+            // 周囲8マスの接触チェック
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+                        if (currentSolution[nr][nc]) return false;
+                    }
+                }
+            }
+            return true;
+        };
+
+        const solveRow = (r) => {
+            if (r === size) {
+                solutionsCount++;
+                return solutionsCount > 1; // 2個以上の解が見つかったら即座にtrueを返して探索打ち切り
+            }
+            
+            for (let c = 0; c < size; c++) {
+                if (colsUsed.has(c)) continue;
+                
+                const regionId = regionMap[r][c];
+                if (regionsUsed.has(regionId)) continue;
+                
+                if (isValid(r, c)) {
+                    currentSolution[r][c] = true;
+                    colsUsed.add(c);
+                    regionsUsed.add(regionId);
+                    
+                    if (solveRow(r + 1)) return true; // 下の行で複数解が見つかって打ち切られた場合は伝播させる
+                    
+                    // バックトラッキング
+                    currentSolution[r][c] = false;
+                    colsUsed.delete(c);
+                    regionsUsed.delete(regionId);
+                }
+            }
+            return false;
+        };
+
+        solveRow(0);
+        return solutionsCount === 1; // 解がちょうど1つなら唯一解
     }
 
     _tryPlaceStars() {

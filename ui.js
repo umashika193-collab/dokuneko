@@ -49,6 +49,25 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.classList.add('hidden');
     }
 
+    let isDragging = false;
+
+    // ドラッグ状態の解除
+    document.addEventListener('mouseup', () => isDragging = false);
+    document.addEventListener('touchend', () => isDragging = false);
+
+    // タッチデバイスでのスワイプ操作（要素の連続取得）
+    gridContainer.addEventListener('touchmove', (e) => {
+        if (!isDragging || currentMode === 'pen') return;
+        e.preventDefault(); // スクロール防止
+        
+        const touch = e.touches[0];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        if (element && element.classList.contains('cell')) {
+            handleCellAction(element, false);
+        }
+    }, {passive: false});
+
     function renderGrid() {
         gridContainer.innerHTML = '';
         gridContainer.style.gridTemplateColumns = `repeat(${game.size}, 1fr)`;
@@ -70,18 +89,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (c > 0 && game.grid[r][c-1].regionId !== regionId) cellDiv.style.borderLeft = '2px solid rgba(255,255,255,0.8)';
                 if (c < game.size-1 && game.grid[r][c+1].regionId !== regionId) cellDiv.style.borderRight = '2px solid rgba(255,255,255,0.8)';
                 
-                cellDiv.addEventListener('click', handleCellClick);
+                // スワイプ・ドラッグ操作対応のイベントリスナー
+                cellDiv.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    handleCellAction(cellDiv, true);
+                });
+                
+                cellDiv.addEventListener('mouseenter', (e) => {
+                    // 猫配置（pen）以外ならドラッグで連続適用
+                    if (isDragging && currentMode !== 'pen') {
+                        handleCellAction(cellDiv, false);
+                    }
+                });
+                
+                cellDiv.addEventListener('touchstart', (e) => {
+                    isDragging = true;
+                    handleCellAction(cellDiv, true);
+                    if (currentMode !== 'pen') {
+                        e.preventDefault(); // スワイプ時のスクロールを防止
+                    }
+                }, {passive: false});
+
                 gridContainer.appendChild(cellDiv);
             }
         }
     }
 
-    function handleCellClick(e) {
+    function handleCellAction(cell, isInitialClick) {
         if (game.isGameOver) return;
         
-        const r = parseInt(e.currentTarget.dataset.r);
-        const c = parseInt(e.currentTarget.dataset.c);
-        const cell = e.currentTarget;
+        const r = parseInt(cell.dataset.r);
+        const c = parseInt(cell.dataset.c);
         
         // Prevent modifying placed cats
         if (game.grid[r][c].content === 'cat') return;
@@ -93,6 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentMode === 'pen') contentToPlace = 'cat';
         else if (currentMode === 'pencil') contentToPlace = 'x';
         else if (currentMode === 'erase') contentToPlace = null;
+
+        // ドラッグ中の最適化: 既に同じ状態ならスキップ
+        if (!isInitialClick && game.grid[r][c].content === contentToPlace) return;
 
         const result = game.placeContent(r, c, contentToPlace);
         
@@ -121,8 +162,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 800);
                 }
             } else if (contentToPlace === 'x') {
-                cell.innerHTML = '<span style="opacity:0.5; font-size:1rem;">❌</span>';
-                if (window.playSFX) window.playSFX('x');
+                // すでにバツがついている場合は上書きしないよう最適化
+                if (!cell.innerHTML.includes('❌')) {
+                    cell.innerHTML = '<span style="opacity:0.5; font-size:1rem;">❌</span>';
+                    if (window.playSFX) window.playSFX('x');
+                }
             } else {
                 cell.innerHTML = '';
             }
