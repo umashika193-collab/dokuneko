@@ -267,7 +267,30 @@ class GameState {
             if (this.solution[r][c] === true) {
                 // Correct placement
                 this.grid[r][c].content = 'cat';
-                return { success: true, correct: true };
+                
+                // オート❌機能：同行、同列、同領域、周囲8マスを'x'で埋める
+                let autoFilled = [];
+                const regionId = this.grid[r][c].regionId;
+                
+                for(let nr = 0; nr < this.size; nr++) {
+                    for(let nc = 0; nc < this.size; nc++) {
+                        if (nr === r && nc === c) continue;
+                        if (this.grid[nr][nc].content !== null) continue; // 既に何かある場合は上書きしない
+                        
+                        let shouldX = false;
+                        if (nr === r) shouldX = true; // 同じ行
+                        else if (nc === c) shouldX = true; // 同じ列
+                        else if (this.grid[nr][nc].regionId === regionId) shouldX = true; // 同じ領域
+                        else if (Math.abs(nr - r) <= 1 && Math.abs(nc - c) <= 1) shouldX = true; // 周囲8マス（斜め含む隣接）
+                        
+                        if (shouldX) {
+                            this.grid[nr][nc].content = 'x';
+                            autoFilled.push({r: nr, c: nc});
+                        }
+                    }
+                }
+                
+                return { success: true, correct: true, autoFilled: autoFilled };
             } else {
                 // Incorrect placement - Penalty!
                 this.lives--;

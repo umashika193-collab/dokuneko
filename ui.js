@@ -92,14 +92,64 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // スワイプ・ドラッグ操作対応のイベントリスナー
                 cellDiv.addEventListener('mousedown', (e) => {
-                    isDragging = true;
-                    handleCellAction(cellDiv, true);
+                    // 左クリックのみドラッグ開始
+                    if (e.button === 0) {
+                        isDragging = true;
+                        handleCellAction(cellDiv, true);
+                    }
                 });
                 
                 cellDiv.addEventListener('mouseenter', (e) => {
+                    const r_idx = parseInt(cellDiv.dataset.r);
+                    const c_idx = parseInt(cellDiv.dataset.c);
+                    const regionId = game.grid[r_idx][c_idx].regionId;
+                    
+                    // ハイライト追加
+                    document.querySelectorAll('.cell').forEach(el => {
+                        const er = parseInt(el.dataset.r);
+                        const ec = parseInt(el.dataset.c);
+                        const er_reg = game.grid[er][ec].regionId;
+                        
+                        if (er === r_idx || ec === c_idx) el.classList.add('highlight-axis');
+                        if (er_reg === regionId) el.classList.add('highlight-region');
+                    });
+
                     // 猫配置（pen）以外ならドラッグで連続適用
                     if (isDragging && currentMode !== 'pen') {
                         handleCellAction(cellDiv, false);
+                    }
+                });
+
+                cellDiv.addEventListener('mouseleave', (e) => {
+                    // ハイライト削除
+                    document.querySelectorAll('.cell').forEach(el => {
+                        el.classList.remove('highlight-axis', 'highlight-region');
+                    });
+                });
+                
+                // 右クリック対応（❌のトグル）
+                cellDiv.addEventListener('contextmenu', (e) => {
+                    e.preventDefault(); // デフォルトの右クリックメニューを防止
+                    if (game.isGameOver) return;
+                    
+                    const r_idx = parseInt(cellDiv.dataset.r);
+                    const c_idx = parseInt(cellDiv.dataset.c);
+                    
+                    if (game.grid[r_idx][c_idx].content === 'cat') return; // 猫には無効
+                    if (cellDiv.innerHTML.includes('⚠️')) return; // ペナルティ中無効
+
+                    const currentContent = game.grid[r_idx][c_idx].content;
+                    const newContent = currentContent === 'x' ? null : 'x';
+                    
+                    game.placeContent(r_idx, c_idx, newContent);
+                    if (newContent === 'x') {
+                        // すでにバツがついていなければ付ける
+                        if (!cellDiv.innerHTML.includes('❌')) {
+                            cellDiv.innerHTML = '<span style="opacity:0.5; font-size:1rem;">❌</span>';
+                            if (window.playSFX) window.playSFX('x');
+                        }
+                    } else {
+                        cellDiv.innerHTML = '';
                     }
                 });
                 
@@ -144,6 +194,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     // サイケデリック毒猫を配置
                     cell.innerHTML = '<img src="cat.png" class="cat-img pop-in">';
                     if (window.playSFX) window.playSFX('cat');
+                    
+                    // オート❌のUI反映
+                    if (result.autoFilled && result.autoFilled.length > 0) {
+                        result.autoFilled.forEach(pos => {
+                            const targetCell = gridContainer.querySelector(`.cell[data-r="${pos.r}"][data-c="${pos.c}"]`);
+                            if (targetCell) {
+                                targetCell.innerHTML = '<span style="opacity:0.5; font-size:1rem;">❌</span>';
+                            }
+                        });
+                        // オート❌完了時に音を鳴らすのもあり
+                    }
                     
                     if (game.checkWinCondition()) {
                         showWin();
@@ -228,6 +289,19 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 game = new GameState(calculateSize(currentLevel));
                 initUI();
+            }
+        });
+
+        // キーボードショートカット
+        document.addEventListener('keydown', (e) => {
+            if (game.isGameOver) return;
+            // 1, 2, 3キーでツール切り替え
+            if (e.key === '1') {
+                btnPen.click();
+            } else if (e.key === '2') {
+                btnPencil.click();
+            } else if (e.key === '3') {
+                btnErase.click();
             }
         });
 

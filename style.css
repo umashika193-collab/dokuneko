@@ -156,6 +156,27 @@ body {
     transform: scale(0.95);
 }
 
+.cell.error {
+    background-color: rgba(255, 0, 0, 0.4);
+    animation: flashError 0.5s ease;
+}
+
+/* 視認性向上のためのハイライト設定 */
+.cell.highlight-axis {
+    background-color: rgba(255, 255, 255, 0.1);
+    mix-blend-mode: screen;
+}
+
+.cell.highlight-region {
+    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.cell img.cat-img {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+}
+
 /* Region colors will be applied via JS classes */
 
 .tools-container {
