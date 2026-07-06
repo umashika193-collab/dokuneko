@@ -8,6 +8,13 @@
     <meta name="theme-color" content="#0a0014">
     <link rel="apple-touch-icon" href="cat_max.png">
     <link rel="stylesheet" href="style.css?v=5">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Reg Failed', err));
+            });
+        }
+    </script>
 </head>
 <body>
     <div class="app-container">
