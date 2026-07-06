@@ -1,0 +1,21 @@
+{
+  "name": "毒猫 - Dokuneko",
+  "short_name": "毒猫",
+  "description": "Psychedelic Star Battle Puzzle",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0a0014",
+  "theme_color": "#0a0014",
+  "icons": [
+    {
+      "src": "cat_max.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "cat_max.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
