@@ -63,8 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const touch = e.touches[0];
         const element = document.elementFromPoint(touch.clientX, touch.clientY);
         
-        if (element && element.classList.contains('cell')) {
-            handleCellAction(element, false);
+        const cell = element ? element.closest('.cell') : null;
+        if (cell) {
+            handleCellAction(cell, false);
         }
     }, {passive: false});
 

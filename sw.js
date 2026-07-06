@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dokuneko-cache-v2'; // バージョンを上げて古いキャッシュを無効化
+const CACHE_NAME = 'dokuneko-cache-v3'; // バージョンを上げて古いキャッシュを無効化
 const urlsToCache = [
   './',
   './index.html',
