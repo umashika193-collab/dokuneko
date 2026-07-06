@@ -13,26 +13,84 @@ function initAudio() {
     bgmGame = new Audio('06-Divine Moments Of Truth.mp3');
     bgmGame.loop = true;
     bgmGame.volume = 0.6;
+}
 
-    bgmEnding = new Audio('05-Shamanix.mp3');
-    bgmEnding.loop = true;
-    bgmEnding.volume = 0.7;
+let endingOscillators = [];
+let endingGain = null;
+
+function playAmbientEnding() {
+    if (!audioCtx || audioCtx.state === 'suspended') return;
+    stopEnding();
+    
+    endingGain = audioCtx.createGain();
+    endingGain.gain.value = 0;
+    // 5秒かけてゆっくりフェードイン
+    endingGain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 5);
+    endingGain.connect(audioCtx.destination);
+    
+    // サイケデリックでアンビエントな和音（Phrygian Dominant風の響き）
+    const chord = [110, 220, 277.18, 329.63]; 
+    
+    chord.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const filter = audioCtx.createBiquadFilter();
+        const lfo = audioCtx.createOscillator();
+        const lfoGain = audioCtx.createGain();
+        
+        osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+        osc.frequency.value = freq + (Math.random() * 2 - 1); // わずかにデチューンして揺らぎを出す
+        
+        // ゆっくりとフィルターが開閉するような有機的な動き（LFO）
+        filter.type = 'lowpass';
+        filter.frequency.value = 300 + i * 150;
+        
+        lfo.type = 'sine';
+        lfo.frequency.value = 0.05 + (i * 0.02); // 非常に遅い周期の波
+        lfoGain.gain.value = 300; 
+        
+        lfo.connect(lfoGain);
+        lfoGain.connect(filter.frequency);
+        
+        osc.connect(filter);
+        filter.connect(endingGain);
+        
+        osc.start();
+        lfo.start();
+        
+        endingOscillators.push(osc, lfo);
+    });
+}
+
+function stopEnding() {
+    if (endingGain) {
+        endingGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2);
+        setTimeout(() => {
+            endingOscillators.forEach(node => {
+                try { node.stop(); } catch(e){}
+                try { node.disconnect(); } catch(e){}
+            });
+            endingOscillators = [];
+            if(endingGain) {
+                try { endingGain.disconnect(); } catch(e){}
+            }
+            endingGain = null;
+        }, 2100);
+    }
 }
 
 function playBGM(type) {
-    if (!bgmGame || !bgmEnding) return;
+    if (!bgmGame) return;
     
     if (type === 'game') {
-        bgmEnding.pause();
-        bgmEnding.currentTime = 0;
+        stopEnding();
         bgmGame.play().catch(e => console.log('Audio play failed', e));
     } else if (type === 'ending') {
         bgmGame.pause();
         bgmGame.currentTime = 0;
-        bgmEnding.play().catch(e => console.log('Audio play failed', e));
+        playAmbientEnding();
     } else if (type === 'stop') {
         bgmGame.pause();
-        bgmEnding.pause();
+        stopEnding();
     }
 }
 
