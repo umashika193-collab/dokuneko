@@ -10,7 +10,7 @@ function initAudio() {
     }
     
     // ご用意いただいたShpongleの名曲をBGMとして読み込み
-    bgmGame = new Audio('06-Divine Moments Of Truth.mp3');
+    bgmGame = new Audio("Poison Cat's Theme.mp3");
     bgmGame.loop = true;
     bgmGame.volume = 0.6;
 }
