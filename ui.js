@@ -104,6 +104,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             timerDisplay.classList.add('hidden');
         }
+        
+        // 【タップ貫通/Ghost Click対策】盤面生成から0.3秒間はパズル全体への操作をロックする
+        gridContainer.style.pointerEvents = 'none';
+        setTimeout(() => {
+            gridContainer.style.pointerEvents = 'auto';
+        }, 300);
     }
 
     function updateTitleBestTime() {
