@@ -184,6 +184,21 @@ body {
     object-fit: contain;
 }
 
+/* 視認性重視のばつ印（どんな背景色でも絶対に見える白文字＋黒フチ） */
+.mark-x {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    opacity: 0.85;
+    text-shadow: 
+        -1px -1px 0 #000,  
+         1px -1px 0 #000,
+        -1px  1px 0 #000,
+         1px  1px 0 #000,
+         0px 0px 8px rgba(0,0,0,0.8);
+    pointer-events: none;
+}
+
 /* Region colors will be applied via JS classes */
 
 .tools-container {

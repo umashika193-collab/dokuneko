@@ -212,8 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     game.placeContent(r_idx, c_idx, newContent);
                     if (newContent === 'x') {
                         // すでにバツがついていなければ付ける
-                        if (!cellDiv.innerHTML.includes('❌')) {
-                            cellDiv.innerHTML = '<span style="opacity:0.5; font-size:1rem;">❌</span>';
+                        if (!cellDiv.innerHTML.includes('✖')) {
+                            cellDiv.innerHTML = '<span class="mark-x">✖</span>';
                             if (window.playSFX) window.playSFX('x');
                         }
                     } else {
@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         result.autoFilled.forEach(pos => {
                             const targetCell = gridContainer.querySelector(`.cell[data-r="${pos.r}"][data-c="${pos.c}"]`);
                             if (targetCell) {
-                                targetCell.innerHTML = '<span style="opacity:0.5; font-size:1rem;">❌</span>';
+                                targetCell.innerHTML = '<span class="mark-x">✖</span>';
                             }
                         });
                         // オート❌完了時に音を鳴らすのもあり
@@ -289,14 +289,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     setTimeout(() => { 
                         if(!game.isGameOver) {
                             // 自動で❌を入れたものを表示
-                            cell.innerHTML = '<span style="opacity:0.5; font-size:1rem;">❌</span>';
+                            cell.innerHTML = '<span class="mark-x">✖</span>';
                         }
                     }, 800);
                 }
             } else if (contentToPlace === 'x') {
                 // すでにバツがついている場合は上書きしないよう最適化
-                if (!cell.innerHTML.includes('❌')) {
-                    cell.innerHTML = '<span style="opacity:0.5; font-size:1rem;">❌</span>';
+                if (!cell.innerHTML.includes('✖')) {
+                    cell.innerHTML = '<span class="mark-x">✖</span>';
                     if (window.playSFX) window.playSFX('x');
                 }
             } else {
