@@ -157,6 +157,7 @@ body {
     cursor: pointer;
     user-select: none;
     transition: background-color 0.2s, transform 0.1s;
+    position: relative;
 }
 
 .cell:active {
@@ -185,17 +186,23 @@ body {
 }
 
 /* 視認性重視のばつ印（どんな背景色でも絶対に見える白文字＋黒フチ） */
-.mark-x {
-    color: #ffffff;
-    font-size: 1.5rem;
-    font-weight: bold;
-    opacity: 0.85;
-    text-shadow: 
-        -1px -1px 0 #000,  
-         1px -1px 0 #000,
-        -1px  1px 0 #000,
-         1px  1px 0 #000,
-         0px 0px 8px rgba(0,0,0,0.8);
+.cell.marked-x::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75); /* 背景を物理的に暗く沈める */
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 4px;
+}
+
+.svg-x {
+    position: relative;
+    z-index: 2;
+    width: 60%;
+    height: 60%;
+    filter: drop-shadow(0 0 4px rgba(0,0,0,1.0)) drop-shadow(0 0 2px rgba(0,0,0,1.0));
+    opacity: 0.95;
     pointer-events: none;
 }
 

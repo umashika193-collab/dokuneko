@@ -3,6 +3,8 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     
+    const SVG_X = '<svg class="svg-x" viewBox="0 0 100 100"><line x1="20" y1="20" x2="80" y2="80" stroke="white" stroke-width="15" stroke-linecap="round" /><line x1="80" y1="20" x2="20" y2="80" stroke="white" stroke-width="15" stroke-linecap="round" /></svg>';
+    
     // Config
     let currentLevel = 1;
 
@@ -212,12 +214,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     game.placeContent(r_idx, c_idx, newContent);
                     if (newContent === 'x') {
                         // すでにバツがついていなければ付ける
-                        if (!cellDiv.innerHTML.includes('✖')) {
-                            cellDiv.innerHTML = '<span class="mark-x">✖</span>';
+                        if (!cellDiv.innerHTML.includes('svg-x')) {
+                            cellDiv.innerHTML = SVG_X;
+                            cellDiv.classList.add('marked-x');
                             if (window.playSFX) window.playSFX('x');
                         }
                     } else {
                         cellDiv.innerHTML = '';
+                        cellDiv.classList.remove('marked-x');
                     }
                 });
                 
@@ -263,6 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (result.correct) {
                     // サイケデリック毒猫を配置
                     cell.innerHTML = '<img src="cat.png" class="cat-img pop-in">';
+                    cell.classList.remove('marked-x');
                     if (window.playSFX) window.playSFX('cat');
                     
                     // オート❌のUI反映
@@ -270,7 +275,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         result.autoFilled.forEach(pos => {
                             const targetCell = gridContainer.querySelector(`.cell[data-r="${pos.r}"][data-c="${pos.c}"]`);
                             if (targetCell) {
-                                targetCell.innerHTML = '<span class="mark-x">✖</span>';
+                                targetCell.innerHTML = SVG_X;
+                                targetCell.classList.add('marked-x');
                             }
                         });
                         // オート❌完了時に音を鳴らすのもあり
@@ -286,21 +292,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateLives();
                     // 赤くバツ印を出して消える
                     cell.innerHTML = '<span style="color:var(--color-danger)">⚠️</span>';
+                    cell.classList.remove('marked-x');
                     setTimeout(() => { 
                         if(!game.isGameOver) {
                             // 自動で❌を入れたものを表示
-                            cell.innerHTML = '<span class="mark-x">✖</span>';
+                            cell.innerHTML = SVG_X;
+                            cell.classList.add('marked-x');
                         }
                     }, 800);
                 }
             } else if (contentToPlace === 'x') {
                 // すでにバツがついている場合は上書きしないよう最適化
-                if (!cell.innerHTML.includes('✖')) {
-                    cell.innerHTML = '<span class="mark-x">✖</span>';
+                if (!cell.innerHTML.includes('svg-x')) {
+                    cell.innerHTML = SVG_X;
+                    cell.classList.add('marked-x');
                     if (window.playSFX) window.playSFX('x');
                 }
             } else {
                 cell.innerHTML = '';
+                cell.classList.remove('marked-x');
             }
         }
         
