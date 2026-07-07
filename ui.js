@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        if (game.isGameOver) {
+        if (game.isGameOver && game.lives <= 0) {
             showGameOver();
         }
     }
