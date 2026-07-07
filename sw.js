@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dokuneko-cache-v4'; // バージョンを上げて古いキャッシュを無効化
+const CACHE_NAME = 'dokuneko-cache-v19'; // バージョンを上げて古いキャッシュを無効化
 const urlsToCache = [
   './',
   './index.html',
@@ -7,7 +7,18 @@ const urlsToCache = [
   './ui.js',
   './sound.js',
   './manifest.json',
-  './cat_max.png'
+  './bg_1.png',
+  './bg_2.png',
+  './bg_3.png',
+  './cat.png',
+  './cat_clear.png',
+  './cat_max.png',
+  './cat_stage1.png',
+  './cat_stage2.png',
+  './cat_stage3.png',
+  './cat_stage4.png',
+  './cat_stage5.png',
+  "./Poison Cat's Theme.mp3"
 ];
 
 self.addEventListener('install', event => {

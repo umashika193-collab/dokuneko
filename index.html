@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,7 +8,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a0014">
     <link rel="apple-touch-icon" href="cat_max.png">
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=7">
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -16,7 +17,22 @@
         }
     </script>
 </head>
+
 <body>
+    <!-- 無限スクロール背景 -->
+    <div class="scrolling-bg-wrapper">
+        <div class="scrolling-bg-track">
+            <div class="bg-piece" style="background-image: url('bg_1.png');"></div>
+            <div class="bg-piece" style="background-image: url('bg_2.png');"></div>
+            <div class="bg-piece" style="background-image: url('bg_3.png');"></div>
+            <!-- ループ用 -->
+            <div class="bg-piece" style="background-image: url('bg_1.png');"></div>
+            <div class="bg-piece" style="background-image: url('bg_2.png');"></div>
+            <div class="bg-piece" style="background-image: url('bg_3.png');"></div>
+        </div>
+        <div class="scrolling-bg-overlay"></div>
+    </div>
+
     <div class="app-container">
         <header class="header">
             <div class="title-container">
@@ -24,6 +40,7 @@
                 <p class="subtitle">Psychedelic Puzzle</p>
             </div>
             <div class="status-container">
+                <div id="timer-display" class="timer-text hidden">00:00</div>
                 <div class="lives" id="lives-container">
                     <span class="heart active">❤️</span>
                     <span class="heart active">❤️</span>
@@ -66,31 +83,55 @@
                 <img src="cat_clear.png" id="clear-cat-img" alt="Poison Cat">
             </div>
             <h2 id="overlay-title">GAME OVER</h2>
-            <p id="overlay-message">毒に飲まれた...</p>
-            <button id="btn-restart" class="action-btn">再挑戦</button>
+            <p id="overlay-message" style="margin-bottom: 20px; font-size: 1.2rem;"></p>
+            <div style="display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 250px;">
+                <button id="btn-restart" class="action-btn">次のレベルへ</button>
+                <button id="btn-overlay-title" class="action-btn" style="border-color: var(--color-cyan); color: var(--color-cyan); box-shadow: 0 0 15px rgba(0, 255, 255, 0.2), inset 0 0 10px rgba(0, 255, 255, 0.2); text-shadow: 0 0 10px var(--color-cyan); background: rgba(0,0,0,0.5);">タイトルへ</button>
+            </div>
         </div>
 
         <div id="ending-screen" class="overlay hidden">
             <div class="credits-container">
                 <h2 class="credits-title">THE END</h2>
-                
+
                 <p class="credits-role">Player</p>
                 <p class="credits-name">俺</p>
-                
+
                 <p class="credits-role">AI Developer</p>
                 <p class="credits-name">Google Antigravity</p>
-                
+
                 <div class="credits-spacer-small"></div>
                 <p class="credits-role">Special Thanks</p>
                 <div class="credits-spacer-medium"></div>
                 <p class="credits-name" style="font-size: 1.8rem; color: #ccc;">Meowdoku</p>
-                
+
                 <div class="credits-spacer-large"></div>
-                
+
                 <p class="credits-fin">Fin</p>
+                
+                <div id="rta-result-container" class="hidden">
+                    <p class="rta-label">RTA Clear Time</p>
+                    <p id="rta-time-display" class="rta-time">--:--</p>
+                    <p id="rta-best-time-display" class="rta-best">Best: --:--</p>
+                </div>
+                
                 <div style="margin-top: 100px;">
                     <button id="btn-ending-continue" class="ending-continue-btn">続けてマタタビ</button>
+                    <div id="rta-ending-buttons" class="hidden" style="display: flex; gap: 20px; justify-content: center;">
+                        <button id="btn-rta-retry" class="ending-continue-btn">もう一度</button>
+                        <button id="btn-rta-title" class="ending-continue-btn" style="border-color: var(--color-cyan); color: var(--color-cyan); box-shadow: 0 0 15px rgba(0, 255, 255, 0.2), inset 0 0 10px rgba(0, 255, 255, 0.2); text-shadow: 0 0 10px var(--color-cyan);">タイトルへ</button>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- iOS Install Instruction Popup -->
+        <div id="ios-install-popup" class="overlay hidden" style="background: rgba(0,0,0,0.8); z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div style="background: var(--glass-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--color-cyan); box-shadow: 0 0 20px rgba(0,255,255,0.3); text-align: center;">
+                <p style="font-size: 1.2rem; margin-bottom: 20px;">アプリをインストールするには：</p>
+                <p style="margin-bottom: 10px;">1. 画面下部の <strong>[共有]</strong> アイコンをタップ</p>
+                <p style="margin-bottom: 30px;">2. <strong>「ホーム画面に追加」</strong>を選択</p>
+                <button id="btn-close-ios-popup" class="action-btn">閉じる</button>
             </div>
         </div>
 
@@ -104,12 +145,20 @@
             <img src="cat_max.png" alt="Dokuneko" id="title-cat-img">
             <h1 class="title-logo">毒猫</h1>
             <p class="title-sub">Psychedelic Puzzle</p>
-            <button id="btn-start" class="action-btn">GAME START</button>
+            <div class="title-buttons">
+                <button id="btn-start-normal" class="action-btn">通常プレイ</button>
+                <div class="rta-btn-wrapper">
+                    <button id="btn-start-rta" class="action-btn rta-btn">タイムアタック</button>
+                    <p id="title-rta-best" class="title-rta-best hidden">Best: --:--</p>
+                </div>
+                <button id="btn-install" class="action-btn hidden" style="background: #333;">📱 アプリをインストール</button>
+            </div>
         </div>
     </div>
 
-    <script src="sound.js"></script>
-    <script src="game.js"></script>
-    <script src="ui.js"></script>
+    <script src="sound.js?v=6"></script>
+    <script src="game.js?v=6"></script>
+    <script src="ui.js?v=6"></script>
 </body>
+
 </html>

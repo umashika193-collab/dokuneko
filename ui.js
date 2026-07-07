@@ -13,16 +13,25 @@ document.addEventListener('DOMContentLoaded', () => {
     let game = new GameState(calculateSize(currentLevel));
     let currentMode = 'pen'; // 'pen', 'pencil', 'erase'
     
+    // Timer State
+    let isTimeAttackMode = false;
+    let rtaTotalTimeMs = 0;
+    let currentLevelStartTime = 0;
+    let timerInterval = null;
+    let isLevelTimerRunning = false;
+    
     // UI Elements
     const gridContainer = document.getElementById('grid-container');
     const livesContainer = document.getElementById('lives-container');
+    const timerDisplay = document.getElementById('timer-display');
     const overlay = document.getElementById('game-over-overlay');
     const overlayTitle = document.getElementById('overlay-title');
     const overlayMessage = document.getElementById('overlay-message');
     const praiseContainer = document.getElementById('praise-container');
     const catMessage = document.getElementById('cat-message');
     const titleScreen = document.getElementById('title-screen');
-    const btnStart = document.getElementById('btn-start');
+    const btnStartNormal = document.getElementById('btn-start-normal');
+    const btnStartRta = document.getElementById('btn-start-rta');
     
     // Tools
     const btnPen = document.getElementById('btn-pen');
@@ -31,22 +40,81 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Region Colors (Psychedelic Theme)
     const regionColors = [
-        'rgba(255, 0, 255, 0.4)', // Magenta
-        'rgba(0, 255, 255, 0.4)', // Cyan
-        'rgba(57, 255, 20, 0.4)', // Lime
-        'rgba(255, 255, 0, 0.4)', // Yellow
-        'rgba(138, 43, 226, 0.4)', // Purple
-        'rgba(255, 69, 0, 0.4)',  // OrangeRed
-        'rgba(0, 250, 154, 0.4)', // MediumSpringGreen
-        'rgba(255, 20, 147, 0.4)',// DeepPink
-        'rgba(30, 144, 255, 0.4)' // DodgerBlue
+        'rgba(255, 0, 255, 1.0)', // Magenta
+        'rgba(0, 255, 255, 1.0)', // Cyan
+        'rgba(57, 255, 20, 1.0)', // Lime
+        'rgba(255, 255, 0, 1.0)', // Yellow
+        'rgba(138, 43, 226, 1.0)', // Purple
+        'rgba(255, 69, 0, 1.0)',  // OrangeRed
+        'rgba(0, 250, 154, 1.0)', // MediumSpringGreen
+        'rgba(255, 20, 147, 1.0)',// DeepPink
+        'rgba(30, 144, 255, 1.0)' // DodgerBlue
     ];
+
+    function formatTime(ms, includeMs = false) {
+        if (isNaN(ms) || ms < 0) return "00:00"; // 【脆弱性対策】ローカルストレージの改ざん（文字列の挿入など）によるNaNバグを防止
+        
+        let totalSec = Math.floor(ms / 1000);
+        let min = Math.floor(totalSec / 60);
+        let sec = totalSec % 60;
+        let timeStr = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        if (includeMs) {
+            let frac = Math.floor((ms % 1000) / 10);
+            timeStr += `.${frac.toString().padStart(2, '0')}`;
+        }
+        return timeStr;
+    }
+
+    function updateTimerDisplay() {
+        if (!isTimeAttackMode) return;
+        let elapsed = rtaTotalTimeMs;
+        if (isLevelTimerRunning) {
+            elapsed += (Date.now() - currentLevelStartTime);
+        }
+        timerDisplay.textContent = formatTime(elapsed);
+    }
+
+    function stopTimer() {
+        if (isLevelTimerRunning) {
+            isLevelTimerRunning = false;
+            rtaTotalTimeMs += (Date.now() - currentLevelStartTime);
+            clearInterval(timerInterval);
+            updateTimerDisplay();
+        }
+    }
+
+    function startTimerIfNeeded() {
+        if (isTimeAttackMode && !isLevelTimerRunning) {
+            isLevelTimerRunning = true;
+            currentLevelStartTime = Date.now();
+            timerInterval = setInterval(updateTimerDisplay, 100);
+        }
+    }
 
     function initUI() {
         document.getElementById('level-display').textContent = `Lv.${currentLevel}`;
         renderGrid();
         updateLives();
         overlay.classList.add('hidden');
+        if (isTimeAttackMode) {
+            timerDisplay.classList.remove('hidden');
+            updateTimerDisplay();
+        } else {
+            timerDisplay.classList.add('hidden');
+        }
+    }
+
+    function updateTitleBestTime() {
+        const titleRtaBest = document.getElementById('title-rta-best');
+        if (titleRtaBest) {
+            const bestRecord = localStorage.getItem('dokuneko_rta_best_time');
+            if (bestRecord) {
+                titleRtaBest.textContent = `Best: ${formatTime(parseInt(bestRecord, 10), true)}`;
+                titleRtaBest.classList.remove('hidden');
+            } else {
+                titleRtaBest.classList.add('hidden');
+            }
+        }
     }
 
     let isDragging = false;
@@ -168,6 +236,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleCellAction(cell, isInitialClick) {
         if (game.isGameOver) return;
+        
+        startTimerIfNeeded();
         
         const r = parseInt(cell.dataset.r);
         const c = parseInt(cell.dataset.c);
@@ -292,6 +362,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // オーバーレイの「タイトルへ」ボタン
+        const btnOverlayTitle = document.getElementById('btn-overlay-title');
+        if (btnOverlayTitle) {
+            btnOverlayTitle.addEventListener('click', () => {
+                overlay.classList.add('hidden');
+                if (window.playBGM) window.playBGM('stop');
+                titleScreen.classList.remove('hidden');
+                updateTitleBestTime();
+                
+                // もしRTAモードだった場合はタイマーも確実に停止
+                isLevelTimerRunning = false;
+                if (timerInterval) clearInterval(timerInterval);
+            });
+        }
+
         // キーボードショートカット
         document.addEventListener('keydown', (e) => {
             if (game.isGameOver) return;
@@ -305,24 +390,52 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        function resetEndingAnimation() {
+            const creditsContainer = document.querySelector('.credits-container');
+            if (creditsContainer) {
+                creditsContainer.style.animation = 'none';
+                creditsContainer.offsetHeight; /* trigger reflow */
+                creditsContainer.style.animation = null; 
+            }
+        }
+
         const btnEndingContinue = document.getElementById('btn-ending-continue');
         if (btnEndingContinue) {
             btnEndingContinue.addEventListener('click', () => {
                 const endingScreen = document.getElementById('ending-screen');
                 if (endingScreen) endingScreen.classList.add('hidden');
                 
-                // アニメーションのリセット
-                const creditsContainer = document.querySelector('.credits-container');
-                if (creditsContainer) {
-                    creditsContainer.style.animation = 'none';
-                    creditsContainer.offsetHeight; /* trigger reflow */
-                    creditsContainer.style.animation = null; 
-                }
+                resetEndingAnimation();
 
                 currentLevel++;
                 game = new GameState(calculateSize(currentLevel));
                 if (window.playBGM) window.playBGM('game');
                 initUI();
+            });
+        }
+
+        const btnRtaRetry = document.getElementById('btn-rta-retry');
+        if (btnRtaRetry) {
+            btnRtaRetry.addEventListener('click', () => {
+                const endingScreen = document.getElementById('ending-screen');
+                if (endingScreen) endingScreen.classList.add('hidden');
+                resetEndingAnimation();
+                
+                currentLevel = 1;
+                game = new GameState(calculateSize(currentLevel));
+                startGame(true);
+            });
+        }
+
+        const btnRtaTitle = document.getElementById('btn-rta-title');
+        if (btnRtaTitle) {
+            btnRtaTitle.addEventListener('click', () => {
+                const endingScreen = document.getElementById('ending-screen');
+                if (endingScreen) endingScreen.classList.add('hidden');
+                resetEndingAnimation();
+                if (window.playBGM) window.playBGM('stop');
+                titleScreen.classList.remove('hidden');
+                updateTitleBestTime();
             });
         }
     }
@@ -355,6 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showGameOver() {
+        stopTimer();
         if (window.playBGM) window.playBGM('stop');
         if (window.playSFX) window.playSFX('gameover');
         praiseContainer.classList.add('hidden');
@@ -368,16 +482,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showWin() {
+        game.isGameOver = true; // 【脆弱性対策】クリア演出中の盤面への意図せぬ連打・操作（Race Condition）を完全にロック
+        stopTimer();
         if (window.playSFX) window.playSFX('clear');
         
         let catImageSrc = 'cat_clear.png';
         if (currentLevel >= 11) {
             catImageSrc = 'cat_max.png';
             catMessage.textContent = generateBossText();
+            document.documentElement.style.setProperty('--color-primary', '#ff003c');
+            document.documentElement.style.setProperty('--color-secondary', '#ff003c');
         } else {
             const stageIndex = ((currentLevel - 1) % 5) + 1; // 1 to 5
             catImageSrc = `cat_stage${stageIndex}.png`;
-            catMessage.textContent = praiseTexts[Math.floor(Math.random() * praiseTexts.length)];
+            catMessage.textContent = 'にゃあ...（毒のパズルを解け）';
+            
+            // 【脆弱性修正】UIのState Bleed（状態汚染）防止
+            document.documentElement.style.setProperty('--color-primary', '#ff00cc');
+            document.documentElement.style.setProperty('--color-secondary', '#00ffff');
         }
         document.getElementById('clear-cat-img').src = catImageSrc;
 
@@ -398,19 +520,148 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.classList.remove('hidden');
     }
 
+    function startTimer() {
+        // 【脆弱性修正】OSの時計を巻き戻すことによるタイム改ざん（チート）を防ぐため、Date.now() ではなく performance.now() を使用
+        levelStartTime = performance.now();
+        isLevelTimerRunning = true;
+        
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if (isTimeAttackMode) {
+                const currentTime = performance.now();
+                const totalElapsed = rtaTotalTimeMs + (currentTime - levelStartTime);
+                timeDisplay.textContent = formatTime(totalElapsed);
+            } else {
+                const elapsed = performance.now() - levelStartTime;
+                timeDisplay.textContent = formatTime(elapsed);
+            }
+        }, 100);
+    }
+
+    function stopTimer() {
+        if (!isLevelTimerRunning) return;
+        if (isTimeAttackMode) {
+            const timeDiff = performance.now() - levelStartTime;
+            rtaTotalTimeMs += timeDiff;
+            isLevelTimerRunning = false;
+        } else {
+            isLevelTimerRunning = false;
+        }
+        if (timerInterval) clearInterval(timerInterval);
+    }
+
     function showEnding() {
         if (window.playBGM) window.playBGM('ending');
         const endingScreen = document.getElementById('ending-screen');
         endingScreen.classList.remove('hidden');
+        
+        const btnEndingContinue = document.getElementById('btn-ending-continue');
+        const rtaEndingButtons = document.getElementById('rta-ending-buttons');
+        
+        if (isTimeAttackMode) {
+            btnEndingContinue.classList.add('hidden');
+            rtaEndingButtons.classList.remove('hidden');
+            
+            const rtaResultContainer = document.getElementById('rta-result-container');
+            const rtaTimeDisplay = document.getElementById('rta-time-display');
+            const rtaBestTimeDisplay = document.getElementById('rta-best-time-display');
+            
+            rtaResultContainer.classList.remove('hidden');
+            const currentRecord = rtaTotalTimeMs;
+            rtaTimeDisplay.textContent = formatTime(currentRecord, true);
+            
+            let bestRecord = localStorage.getItem('dokuneko_rta_best_time');
+            let isNewRecord = false;
+            
+            if (!bestRecord || currentRecord < parseInt(bestRecord, 10)) {
+                localStorage.setItem('dokuneko_rta_best_time', currentRecord.toString());
+                bestRecord = currentRecord;
+                isNewRecord = true;
+            }
+            
+            rtaBestTimeDisplay.textContent = `Best: ${formatTime(parseInt(bestRecord, 10), true)}`;
+            
+            if (isNewRecord) {
+                rtaTimeDisplay.classList.add('new-record');
+                rtaTimeDisplay.textContent += ' (New Record!)';
+            } else {
+                rtaTimeDisplay.classList.remove('new-record');
+                rtaTimeDisplay.textContent = formatTime(currentRecord, true);
+            }
+        } else {
+            btnEndingContinue.classList.remove('hidden');
+            rtaEndingButtons.classList.add('hidden');
+            document.getElementById('rta-result-container').classList.add('hidden');
+        }
     }
 
-    btnStart.addEventListener('click', () => {
+    function startGame(isRta) {
+        isTimeAttackMode = isRta;
+        
+        // 状態の完全リセット
+        currentLevel = 1;
+        game = new GameState(calculateSize(currentLevel));
+        
+        if (isTimeAttackMode) {
+            rtaTotalTimeMs = 0;
+            isLevelTimerRunning = false;
+            if (timerInterval) clearInterval(timerInterval);
+        }
         if (window.initAudio) window.initAudio();
         if (window.playBGM) window.playBGM('game');
         titleScreen.classList.add('hidden');
-    });
+        initUI();
+    }
+
+    btnStartNormal.addEventListener('click', () => startGame(false));
+    btnStartRta.addEventListener('click', () => startGame(true));
+
+    // --- PWA Install Logic ---
+    let deferredPrompt;
+    const btnInstall = document.getElementById('btn-install');
+    const iosInstallPopup = document.getElementById('ios-install-popup');
+    const btnCloseIosPopup = document.getElementById('btn-close-ios-popup');
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    if (isIOS && !isStandalone) {
+        if (btnInstall) {
+            btnInstall.classList.remove('hidden');
+            btnInstall.addEventListener('click', () => {
+                if (iosInstallPopup) iosInstallPopup.classList.remove('hidden');
+            });
+        }
+    } else {
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (btnInstall && !isStandalone) {
+                btnInstall.classList.remove('hidden');
+            }
+        });
+
+        if (btnInstall) {
+            btnInstall.addEventListener('click', async () => {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    btnInstall.classList.add('hidden');
+                }
+                deferredPrompt = null;
+            });
+        }
+    }
+
+    if (btnCloseIosPopup) {
+        btnCloseIosPopup.addEventListener('click', () => {
+            iosInstallPopup.classList.add('hidden');
+        });
+    }
 
     // Start
     setupTools();
+    updateTitleBestTime();
     initUI();
 });

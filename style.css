@@ -30,16 +30,6 @@ body {
     justify-content: center;
     align-items: center;
     overflow: hidden;
-    /* Psychedelic animated background */
-    background: radial-gradient(circle at 50% 50%, var(--color-purple) 0%, var(--color-bg-deep) 60%);
-    background-size: 200% 200%;
-    animation: bgShift 15s ease infinite;
-}
-
-@keyframes bgShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
 }
 
 .app-container {
@@ -49,9 +39,8 @@ body {
     display: flex;
     flex-direction: column;
     padding: 20px;
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(20, 0, 30, 0.8); /* 背景を透けさせる */
+    /* backdrop-filter: blur(4px); を削除し完全にクリアに */
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
     position: relative;
@@ -103,10 +92,28 @@ body {
     color: var(--color-cyan);
 }
 
+.status-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
 .lives {
     display: flex;
-    gap: 8px;
-    font-size: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 4px;
+    font-size: 1.1rem;
+    max-width: 130px;
+}
+
+.timer-text {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--color-cyan);
+    text-shadow: 0 0 10px var(--color-cyan);
+    margin-right: 15px;
+    font-variant-numeric: tabular-nums;
 }
 
 .heart {
@@ -349,7 +356,7 @@ body {
     100% { transform: translateY(-80px) rotate(360deg) scale(1.5); filter: hue-rotate(180deg) drop-shadow(0 0 30px var(--color-magenta)); }
 }
 
-#title-cat-img, .title-logo, .title-sub, #btn-start {
+#title-cat-img, .title-logo, .title-sub, .title-buttons {
     position: relative;
     z-index: 10;
 }
@@ -382,6 +389,39 @@ body {
     color: var(--color-cyan);
     letter-spacing: 8px;
     margin-bottom: 40px;
+}
+
+.title-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.title-buttons .action-btn {
+    margin-top: 0;
+    width: 250px;
+}
+
+.rta-btn-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.title-rta-best {
+    font-size: 0.9rem;
+    color: var(--color-cyan);
+    text-shadow: 0 0 5px var(--color-cyan);
+    font-variant-numeric: tabular-nums;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.rta-btn {
+    background: var(--color-magenta);
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.6);
 }
 
 .cat-img {
@@ -499,6 +539,46 @@ body {
     font-weight: bold;
 }
 
+#rta-result-container {
+    margin-top: 60px;
+    padding: 20px;
+    border: 2px solid var(--color-cyan);
+    border-radius: 15px;
+    background: rgba(0, 255, 255, 0.1);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+}
+
+.rta-label {
+    font-size: 1.5rem;
+    color: var(--color-cyan);
+    letter-spacing: 5px;
+    margin-bottom: 10px;
+}
+
+.rta-time {
+    font-size: 3.5rem;
+    color: var(--text-primary);
+    font-weight: bold;
+    text-shadow: 0 0 15px var(--color-cyan);
+    margin-bottom: 15px;
+    font-variant-numeric: tabular-nums;
+}
+
+.rta-best {
+    font-size: 1.2rem;
+    color: var(--color-magenta);
+}
+
+.new-record {
+    color: var(--color-lime);
+    animation: newRecordPulse 1s infinite alternate;
+}
+
+@keyframes newRecordPulse {
+    0% { transform: scale(1); text-shadow: 0 0 10px var(--color-lime); }
+    100% { transform: scale(1.1); text-shadow: 0 0 20px var(--color-lime), 0 0 40px var(--color-lime); }
+}
+
 .credits-spacer-small { height: 100px; }
 .credits-spacer-medium { height: 150px; }
 .credits-spacer-large { height: 500px; }
@@ -532,4 +612,48 @@ body {
     background: rgba(255, 0, 255, 0.2);
     box-shadow: 0 0 25px var(--color-magenta), inset 0 0 15px var(--color-magenta);
     transform: scale(1.05);
+}
+
+/* --- Infinite Scrolling Background --- */
+.scrolling-bg-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    overflow: hidden;
+    background-color: var(--color-bg-deep);
+}
+
+.scrolling-bg-track {
+    display: flex;
+    height: 100%;
+    width: max-content;
+    animation: infiniteScroll 60s linear infinite;
+}
+
+@keyframes infiniteScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-270vh); }
+}
+
+.bg-piece {
+    width: 100vh;
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+    margin-right: -10vh; /* 画像同士を10%重ねる */
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+.scrolling-bg-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 0, 20, 0.1); /* ほんのわずかな暗さのみ残す */
+    pointer-events: none;
 }

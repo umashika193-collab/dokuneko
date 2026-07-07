@@ -260,8 +260,10 @@ class GameState {
     }
 
     placeContent(r, c, content) {
-        if (this.isGameOver) return { success: false, reason: 'gameover' };
-        
+        if (this.isGameOver) return { success: false, correct: false };
+        // 【脆弱性対策】ブラウザの開発者ツールでDOMの data-r, data-c 属性を書き換えられてもJSがクラッシュしないようにするガード
+        if (r < 0 || r >= this.size || c < 0 || c >= this.size) return { success: false, correct: false };
+
         // If placing cat
         if (content === 'cat') {
             if (this.solution[r][c] === true) {
