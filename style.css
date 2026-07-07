@@ -366,6 +366,12 @@ body {
     text-shadow: 0 0 20px var(--color-lime);
 }
 
+.floating-matatabi svg {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+}
+
 .m1 { top: 10%; left: 10%; animation-duration: 3.2s; animation-delay: 0s; }
 .m2 { top: 70%; left: 15%; animation-duration: 4.5s; animation-delay: 1s; }
 .m3 { top: 20%; right: 15%; animation-duration: 5.1s; animation-delay: 0.5s; }

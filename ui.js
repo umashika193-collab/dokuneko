@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isTimeAttackMode) return;
         let elapsed = rtaTotalTimeMs;
         if (isLevelTimerRunning) {
-            elapsed += (Date.now() - currentLevelStartTime);
+            elapsed += (performance.now() - currentLevelStartTime);
         }
         timerDisplay.textContent = formatTime(elapsed);
     }
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function stopTimer() {
         if (isLevelTimerRunning) {
             isLevelTimerRunning = false;
-            rtaTotalTimeMs += (Date.now() - currentLevelStartTime);
+            rtaTotalTimeMs += (performance.now() - currentLevelStartTime);
             clearInterval(timerInterval);
             updateTimerDisplay();
         }
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function startTimerIfNeeded() {
         if (isTimeAttackMode && !isLevelTimerRunning) {
             isLevelTimerRunning = true;
-            currentLevelStartTime = Date.now();
+            currentLevelStartTime = performance.now();
             timerInterval = setInterval(updateTimerDisplay, 100);
         }
     }
@@ -536,35 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.classList.remove('hidden');
     }
 
-    function startTimer() {
-        // 【脆弱性修正】OSの時計を巻き戻すことによるタイム改ざん（チート）を防ぐため、Date.now() ではなく performance.now() を使用
-        levelStartTime = performance.now();
-        isLevelTimerRunning = true;
-        
-        if (timerInterval) clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
-            if (isTimeAttackMode) {
-                const currentTime = performance.now();
-                const totalElapsed = rtaTotalTimeMs + (currentTime - levelStartTime);
-                timeDisplay.textContent = formatTime(totalElapsed);
-            } else {
-                const elapsed = performance.now() - levelStartTime;
-                timeDisplay.textContent = formatTime(elapsed);
-            }
-        }, 100);
-    }
 
-    function stopTimer() {
-        if (!isLevelTimerRunning) return;
-        if (isTimeAttackMode) {
-            const timeDiff = performance.now() - levelStartTime;
-            rtaTotalTimeMs += timeDiff;
-            isLevelTimerRunning = false;
-        } else {
-            isLevelTimerRunning = false;
-        }
-        if (timerInterval) clearInterval(timerInterval);
-    }
 
     function showEnding() {
         if (window.playBGM) window.playBGM('ending');
