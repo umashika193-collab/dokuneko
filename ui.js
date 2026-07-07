@@ -511,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             const stageIndex = ((currentLevel - 1) % 5) + 1; // 1 to 5
             catImageSrc = `cat_stage${stageIndex}.png`;
-            catMessage.textContent = 'にゃあ...（毒のパズルを解け）';
+            catMessage.textContent = praiseTexts[Math.floor(Math.random() * praiseTexts.length)];
             
             // 【脆弱性修正】UIのState Bleed（状態汚染）防止
             document.documentElement.style.setProperty('--color-primary', '#ff00cc');
