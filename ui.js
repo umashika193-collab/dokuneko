@@ -604,41 +604,74 @@ document.addEventListener('DOMContentLoaded', () => {
     btnStartNormal.addEventListener('click', () => startGame(false));
     btnStartRta.addEventListener('click', () => startGame(true));
 
-    // --- PWA Install Logic ---
+    // --- PWA Install & External Browser Logic ---
     let deferredPrompt;
     const btnInstall = document.getElementById('btn-install');
     const iosInstallPopup = document.getElementById('ios-install-popup');
     const btnCloseIosPopup = document.getElementById('btn-close-ios-popup');
+    const btnOpenStandardBrowser = document.getElementById('btn-open-standard-browser');
 
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-    if (isIOS && !isStandalone) {
-        if (btnInstall) {
-            btnInstall.classList.remove('hidden');
-            btnInstall.addEventListener('click', () => {
-                if (iosInstallPopup) iosInstallPopup.classList.remove('hidden');
+    // インアプリブラウザ判定
+    const isLine = /Line/i.test(ua);
+    const isTwitter = /Twitter/i.test(ua);
+    const isInstagram = /Instagram/i.test(ua);
+    const isFB = /FBAN|FBAV/i.test(ua);
+    const isInApp = isLine || isTwitter || isInstagram || isFB;
+
+    // PWA非対応ブラウザ(インアプリブラウザ、またはserviceWorker非対応)で、まだインストールされていない場合
+    if ((isInApp || !('serviceWorker' in navigator)) && !isStandalone) {
+        if (btnOpenStandardBrowser) {
+            btnOpenStandardBrowser.classList.remove('hidden');
+            btnOpenStandardBrowser.addEventListener('click', () => {
+                const currentUrl = location.href;
+                
+                if (isLine) {
+                    location.href = currentUrl + (currentUrl.includes('?') ? '&' : '?') + 'openExternalBrowser=1';
+                } else if (!isIOS) {
+                    // Android Intent
+                    const host = location.host;
+                    const path = location.pathname;
+                    const search = location.search;
+                    location.href = `intent://${host}${path}${search}#Intent;scheme=https;package=com.android.chrome;end;`;
+                } else {
+                    // iOSなど
+                    alert('画面下部（または上部）のメニューアイコンから「Safariで開く」または「ブラウザで開く」を選択してください。');
+                }
             });
         }
     } else {
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            if (btnInstall && !isStandalone) {
+        // 通常のPWAインストールロジック
+        if (isIOS && !isStandalone) {
+            if (btnInstall) {
                 btnInstall.classList.remove('hidden');
+                btnInstall.addEventListener('click', () => {
+                    if (iosInstallPopup) iosInstallPopup.classList.remove('hidden');
+                });
             }
-        });
-
-        if (btnInstall) {
-            btnInstall.addEventListener('click', async () => {
-                if (!deferredPrompt) return;
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    btnInstall.classList.add('hidden');
+        } else {
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                if (btnInstall && !isStandalone) {
+                    btnInstall.classList.remove('hidden');
                 }
-                deferredPrompt = null;
             });
+
+            if (btnInstall) {
+                btnInstall.addEventListener('click', async () => {
+                    if (!deferredPrompt) return;
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        btnInstall.classList.add('hidden');
+                    }
+                    deferredPrompt = null;
+                });
+            }
         }
     }
 
