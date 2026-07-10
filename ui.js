@@ -494,6 +494,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnRestart = document.getElementById('btn-restart');
         btnRestart.textContent = '再挑戦';
         btnRestart.dataset.action = 'restart';
+        
+        // 【タップ貫通/Ghost Click対策】出現直後の意図せぬボタン押下を防ぐ
+        overlay.style.pointerEvents = 'none';
+        setTimeout(() => {
+            overlay.style.pointerEvents = 'auto';
+        }, 600);
+        
         overlay.classList.remove('hidden');
     }
 
@@ -533,6 +540,12 @@ document.addEventListener('DOMContentLoaded', () => {
             btnRestart.dataset.action = 'next';
         }
         
+        // 【タップ貫通/Ghost Click対策】出現直後の意図せぬボタン押下を防ぐ
+        overlay.style.pointerEvents = 'none';
+        setTimeout(() => {
+            overlay.style.pointerEvents = 'auto';
+        }, 600);
+        
         overlay.classList.remove('hidden');
     }
 
@@ -541,6 +554,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function showEnding() {
         if (window.playBGM) window.playBGM('ending');
         const endingScreen = document.getElementById('ending-screen');
+        
+        // 【タップ貫通/Ghost Click対策】出現直後の意図せぬボタン押下を防ぐ
+        endingScreen.style.pointerEvents = 'none';
+        setTimeout(() => {
+            endingScreen.style.pointerEvents = 'auto';
+        }, 600);
+        
         endingScreen.classList.remove('hidden');
         
         const btnEndingContinue = document.getElementById('btn-ending-continue');
