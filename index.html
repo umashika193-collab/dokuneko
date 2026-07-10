@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a0014">
     <link rel="apple-touch-icon" href="cat_max.png">
-    <link rel="stylesheet" href="style.css?v=9">
+    <link rel="stylesheet" href="style.css?v=10">
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -35,7 +35,7 @@
 
     <!-- バージョン表記 -->
     <div id="version-display" style="position: fixed; bottom: 10px; right: 10px; color: rgba(0, 255, 255, 0.4); font-size: 0.8rem; z-index: 1000; font-family: 'Courier New', monospace; pointer-events: none;">
-        v1.0.5
+        v1.0.6
     </div>
 
     <div class="app-container">
@@ -96,8 +96,8 @@
             <p id="overlay-message" style="margin-bottom: 20px; font-size: 1.2rem;"></p>
             <div style="display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 250px;">
                 <button id="btn-restart" class="action-btn">次のレベルへ</button>
-                <button id="btn-overlay-title" class="action-btn" style="margin-top: 60px; border-color: var(--color-cyan); color: var(--color-cyan); box-shadow: 0 0 15px rgba(0, 255, 255, 0.2), inset 0 0 10px rgba(0, 255, 255, 0.2); text-shadow: 0 0 10px var(--color-cyan); background: rgba(0,0,0,0.5);">タイトルへ</button>
             </div>
+            <button id="btn-overlay-title" class="action-btn" style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 250px; border-color: var(--color-cyan); color: var(--color-cyan); box-shadow: 0 0 15px rgba(0, 255, 255, 0.2), inset 0 0 10px rgba(0, 255, 255, 0.2); text-shadow: 0 0 10px var(--color-cyan); background: rgba(0,0,0,0.5);">タイトルへ</button>
         </div>
 
         <div id="ending-screen" class="overlay hidden">
@@ -167,9 +167,9 @@
         </div>
     </div>
 
-    <script src="sound.js?v=9"></script>
-    <script src="game.js?v=9"></script>
-    <script src="ui.js?v=9"></script>
+    <script src="sound.js?v=10"></script>
+    <script src="game.js?v=10"></script>
+    <script src="ui.js?v=10"></script>
 </body>
 
 </html>
