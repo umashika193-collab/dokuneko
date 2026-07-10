@@ -499,7 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.style.pointerEvents = 'none';
         setTimeout(() => {
             overlay.style.pointerEvents = 'auto';
-        }, 600);
+        }, 1200);
         
         overlay.classList.remove('hidden');
     }
@@ -544,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.style.pointerEvents = 'none';
         setTimeout(() => {
             overlay.style.pointerEvents = 'auto';
-        }, 600);
+        }, 1200);
         
         overlay.classList.remove('hidden');
     }
@@ -559,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
         endingScreen.style.pointerEvents = 'none';
         setTimeout(() => {
             endingScreen.style.pointerEvents = 'auto';
-        }, 600);
+        }, 1200);
         
         endingScreen.classList.remove('hidden');
         
