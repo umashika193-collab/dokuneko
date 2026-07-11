@@ -4,7 +4,7 @@
 class GameState {
     constructor(size = 5) {
         this.size = size;
-        this.maxLives = Math.max(5, this.size); // レベル（サイズ）に応じて最大ライフを増加
+        this.maxLives = Math.max(3, Math.ceil(this.size / 2) + 1); // レベルに応じたライフ（初期配置緩和のため少し厳しめ）
         this.lives = this.maxLives;
         this.grid = []; // 2D array of objects { regionId, content: null | 'cat' | 'x' }
         this.solution = []; // 2D array boolean (hasCat)
@@ -195,6 +195,10 @@ class GameState {
             }
         }
 
+        // 初手の手がかり用に、最低1つの領域を小さく保つ（サイズ1または2）
+        const smallRegionIndex = Math.floor(Math.random() * this.regions.length);
+        const targetSmallSize = Math.floor(Math.random() * 2) + 1; // 1 or 2
+
         // Grow regions randomly
         let madeProgress = true;
         while (unassigned.size > 0 && madeProgress) {
@@ -206,6 +210,10 @@ class GameState {
             
             for (let i of regionIndices) {
                 const region = this.regions[i];
+                
+                // 初手用の領域は指定サイズ以上拡張させない
+                if (i === smallRegionIndex && region.length >= targetSmallSize) continue;
+
                 // Find all unassigned neighbors of this region
                 const neighbors = [];
                 for (let cell of region) {
